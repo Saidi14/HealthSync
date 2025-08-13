@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import { router } from 'expo-router';
 
 export default function SignUpScreen() {
   return (

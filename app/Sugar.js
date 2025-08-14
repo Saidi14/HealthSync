@@ -15,7 +15,7 @@ export default function Sugar({ navigation }) {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Daily Sugar</Text>
-        <Text style={styles.iconPlaceholder}>🍬</Text>
+        <Text style={styles.iconPlaceholder}>🍭</Text>
       </View>
 
       <View style={styles.summaryContainer}>

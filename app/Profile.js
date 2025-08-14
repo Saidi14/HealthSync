@@ -1,17 +1,34 @@
+// Profile.js
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import BottomNavBar from './BottomNavBar';
-import { Ionicons } from '@expo/vector-icons'; // Assuming you use Expo for icons
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native'; // hook
 
-export default function Profile({ navigation }) {
+export default function Profile() {
+  const navigation = useNavigation(); // get navigation even if prop is missing
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        {/* Avatar */}
         <Image
           source={require('../assets/images/naqeebahicon.png')}
           style={styles.avatar}
         />
+
+        {/* Settings Icon */}
+        <TouchableOpacity
+          style={styles.settingsIcon}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Ionicons name="settings-outline" size={28} color="#c187e5" />
+        </TouchableOpacity>
+
+        {/* Name */}
         <Text style={styles.name}>Naqeebah Khan</Text>
+
+        {/* Stats */}
         <View style={styles.stats}>
           <View style={styles.statItem}>
             <Text style={styles.stat}>7</Text>
@@ -26,9 +43,6 @@ export default function Profile({ navigation }) {
             <Text style={styles.statLabel}>Hikes</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.settingsIcon} onPress={() => navigation.navigate('Settings')}>
-          <Ionicons name="settings-outline" size={24} color="#c187e5" />
-        </TouchableOpacity>
       </View>
 
       <Text style={styles.sectionHeader}>Your Information</Text>
@@ -64,72 +78,73 @@ export default function Profile({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-    paddingBottom: 70,
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff', 
+    padding: 20, 
+    paddingBottom: 70 
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 20,
-    position: 'relative',
+  header: { 
+    alignItems: 'center', 
+    marginBottom: 20, 
+    position: 'relative' 
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+  avatar: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 40, 
+    marginBottom: 10 
   },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+  settingsIcon: { 
+    position: 'absolute', 
+    top: 10, 
+    right: 0, 
+    zIndex: 10, 
+    padding: 10 
   },
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+  name: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: '#333', 
+    marginBottom: 10 
   },
-  statItem: {
-    alignItems: 'center',
+  stats: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around', 
+    width: '100%' 
   },
-  stat: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#c187e5',
+  statItem: { 
+    alignItems: 'center' 
   },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+  stat: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#c187e5' 
   },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+  statLabel: { 
+    fontSize: 14, 
+    color: '#666', 
+    marginTop: 4 
   },
-  infoItemCard: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+  sectionHeader: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    color: '#333', 
+    marginBottom: 15 
   },
-  infoLabel: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
+  infoItemCard: { 
+    backgroundColor: '#f9f9f9', 
+    borderRadius: 10, 
+    padding: 15, 
+    marginBottom: 10 
   },
-  infoValue: {
-    fontSize: 16,
-    color: '#333',
+  infoLabel: { 
+    fontSize: 16, 
+    color: '#666', 
+    marginBottom: 5 
   },
-  settingsIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
+  infoValue: { 
+    fontSize: 16, 
+    color: '#333' 
   },
 });
-

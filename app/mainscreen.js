@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import BottomNavBar from '../app/BottomNavBar';
+import BottomNavBar from './BottomNavBar';
 
 export default function MainScreen() {
   return (

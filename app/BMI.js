@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
 import BottomNavBar from './BottomNavBar';
 
 export default function BMI({ navigation }) {
   const [weight, setWeight] = useState(65);
   const [height, setHeight] = useState(165);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentField, setCurrentField] = useState(null); // 'weight' or 'height'
+  const [inputValue, setInputValue] = useState('');
 
   const calculateBMI = () => {
     const heightInMeters = height / 100;
@@ -21,58 +25,131 @@ export default function BMI({ navigation }) {
   const bmi = calculateBMI();
   const category = getBMICategory(bmi);
 
+  const openModal = (field) => {
+    setCurrentField(field);
+    setInputValue(field === 'weight' ? weight.toString() : height.toString());
+    setModalVisible(true);
+  };
+
+  const saveValue = () => {
+    const numericValue = Number(inputValue);
+    if (!isNaN(numericValue) && numericValue > 0) {
+      if (currentField === 'weight') setWeight(numericValue);
+      else if (currentField === 'height') setHeight(numericValue);
+    }
+    setModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>BMI Tracking</Text>
-
       <Text style={styles.bmiValue}>{bmi}</Text>
-      <Text style={styles.bmiCategory}>{category}</Text>
+      <Text
+        style={[
+          styles.bmiCategory,
+          bmi >= 18.5 && bmi <= 24.9 && styles.bmiCategoryHighlight,
+        ]}
+      >
+        {category}
+      </Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Weight (kg)</Text>
-        <TextInput
-          style={styles.input}
-          value={weight.toString()}
-          onChangeText={(text) => setWeight(Number(text))}
-          keyboardType="numeric"
-        />
+      <View style={styles.measurementContainer}>
+        {/* Weight */}
+        <View style={styles.measurementItem}>
+          <Text
+            style={{
+              fontSize: 24,
+              color: bmi >= 18.5 && bmi <= 24.9 ? '#c187e5' : '#2196F3',
+            }}
+          >
+            ⚖️
+          </Text>
+          <View style={styles.labelValueContainerLeft}>
+            <Text style={styles.measurementLabel}>Weight</Text>
+            <Text style={styles.measurementValue}>{weight} kg</Text>
+          </View>
+          <TouchableOpacity style={styles.updateButton} onPress={() => openModal('weight')}>
+            <Text style={styles.updateButtonText}>Update</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Height */}
+        <View style={styles.measurementItem}>
+          <Text
+            style={{
+              fontSize: 24,
+              color: bmi >= 18.5 && bmi <= 24.9 ? '#c187e5' : '#2196F3',
+            }}
+          >
+            📏
+          </Text>
+          <View style={styles.labelValueContainerLeft}>
+            <Text style={styles.measurementLabel}>Height</Text>
+            <Text style={styles.measurementValue}>{height} cm</Text>
+          </View>
+          <TouchableOpacity style={styles.updateButton} onPress={() => openModal('height')}>
+            <Text style={styles.updateButtonText}>Update</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Height (cm)</Text>
-        <TextInput
-          style={styles.input}
-          value={height.toString()}
-          onChangeText={(text) => setHeight(Number(text))}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <TouchableOpacity style={styles.updateButton}>
-        <Text style={styles.updateButtonText}>Update</Text>
-      </TouchableOpacity>
 
       <View style={styles.divider} />
 
       <Text style={styles.subHeader}>BMI Categories</Text>
-      <View style={styles.table}>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Underweight</Text>
-          <Text style={styles.tableCell}>{'< 18.5'}</Text>
+      <View style={styles.categoryContainer}>
+        <View style={styles.categoryRow}>
+          <Text style={styles.categoryText}>Underweight</Text>
+          <Text style={styles.categoryRange}>{'< 18.5'}</Text>
         </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Normal</Text>
-          <Text style={styles.tableCell}>18.5 - 24.9</Text>
+        <View style={styles.categoryRow}>
+          <Text
+            style={[
+              styles.categoryText,
+              bmi >= 18.5 && bmi <= 24.9 && styles.categoryTextHighlight,
+            ]}
+          >
+            Normal
+          </Text>
+          <Text style={styles.categoryRange}>18.5 - 24.9</Text>
         </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Overweight</Text>
-          <Text style={styles.tableCell}>25 - 29.9</Text>
+        <View style={styles.categoryRow}>
+          <Text style={styles.categoryText}>Overweight</Text>
+          <Text style={styles.categoryRange}>25 - 29.9</Text>
         </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Obese</Text>
-          <Text style={styles.tableCell}>{'> 30'}</Text>
+        <View style={styles.categoryRow}>
+          <Text style={styles.categoryText}>Obese</Text>
+          <Text style={styles.categoryRange}>{'> 30'}</Text>
         </View>
       </View>
+
+      {/* Modal for updating weight/height */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalHeader}>
+              Update {currentField === 'weight' ? 'Weight' : 'Height'}
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              keyboardType="numeric"
+              value={inputValue}
+              onChangeText={setInputValue}
+            />
+            <TouchableOpacity style={styles.saveButton} onPress={saveValue}>
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={{ marginTop: 10 }}
+            >
+              <Text style={{ textAlign: 'center', color: 'red' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <BottomNavBar navigation={navigation} />
     </View>
@@ -86,50 +163,56 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 70,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
-  },
   bmiValue: {
-    fontSize: 24,
+    fontSize: 48,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#333',
     textAlign: 'center',
   },
   bmiCategory: {
-    fontSize: 18,
+    fontSize: 20,
     marginBottom: 20,
     color: '#333',
     textAlign: 'center',
   },
-  inputContainer: {
-    marginBottom: 15,
+  bmiCategoryHighlight: {
+    color: '#c187e5',
   },
-  inputLabel: {
+  measurementContainer: {
+    marginBottom: 20,
+  },
+  measurementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  labelValueContainerLeft: {
+    marginLeft: 10,
+    justifyContent: 'center',
+  },
+  measurementLabel: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 5,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 8,
-    borderRadius: 4,
+  measurementValue: {
     fontSize: 16,
+    color: '#333',
+    marginTop: 5,
   },
   updateButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#c187e5',
     borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    marginBottom: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginLeft: 'auto',
   },
   updateButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   divider: {
@@ -143,19 +226,68 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#333',
   },
-  table: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+  categoryContainer: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
   },
-  tableRow: {
+  categoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingVertical: 5,
   },
-  tableCell: {
+  categoryText: {
     fontSize: 16,
     color: '#333',
   },
+  categoryTextHighlight: {
+    color: '#c187e5',
+  },
+  categoryRange: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+  },
+  modalHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#c187e5',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
+
+
+
+
+

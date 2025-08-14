@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Switch, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Assuming you use Expo for icons
+import { Ionicons } from '@expo/vector-icons';
+import BottomNavBar from './BottomNavBar'; // import BottomNavBar
 
 export default function Settings({ navigation }) {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -24,13 +25,15 @@ export default function Settings({ navigation }) {
           onValueChange={setIsDarkTheme}
           value={isDarkTheme}
           trackColor={{ false: '#ccc', true: '#c187e5' }}
-          thumbColor={isDarkTheme ? '#fff' : '#fff'}
+          thumbColor="#fff"
         />
       </View>
 
       <TouchableOpacity style={styles.logoutButton}>
         <Text style={styles.logoutText}>Log out</Text>
       </TouchableOpacity>
+
+      <BottomNavBar /> {/* Always at bottom due to absolute positioning */}
     </View>
   );
 }
@@ -40,6 +43,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
+    paddingBottom: 70, // extra space for navbar
   },
   header: {
     flexDirection: 'row',

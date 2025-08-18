@@ -111,7 +111,7 @@ export default function Sugar({ navigation }) {
             </View>
 
             <TouchableOpacity style={styles.calculateButton}>
-              <Text style={styles.calculateButtonText}>Calculate calories</Text>
+              <Text style={styles.calculateButtonText}>Calculate sugar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

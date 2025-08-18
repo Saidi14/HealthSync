@@ -146,7 +146,7 @@ export default function Macros({ navigation }) {
             </View>
 
             <TouchableOpacity style={styles.calculateButton}>
-              <Text style={styles.calculateButtonText}>Calculate calories</Text>
+              <Text style={styles.calculateButtonText}>Calculate macros</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

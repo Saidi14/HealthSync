@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
+import { db } from "../firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function BMIPage({ navigation }) {
   const [height, setHeight] = useState('165');
@@ -19,6 +21,23 @@ export default function BMIPage({ navigation }) {
     else if (bmiValue < 25) setCategory('Normal');
     else if (bmiValue < 30) setCategory('Overweight');
     else setCategory('Obese');
+
+    saveBMI(newHeight, newWeight, bmiValue.toFixed(1), category);
+  };
+
+  const saveBMI = async (height, weight, bmiValue, category) => {
+    try {
+      await addDoc(collection(db, "bmiRecords"), {
+        height,
+        weight,
+        bmi: bmiValue,
+        category,
+        createdAt: serverTimestamp()
+      });
+      console.log("✅ BMI record saved!");
+    } catch (error) {
+      console.error("❌ Error saving BMI: ", error);
+    }
   };
 
   return (

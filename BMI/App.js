@@ -13,14 +13,17 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarIcon: ({ color, size }) => {
           let iconName;
           let iconSize = size;
 
-          if (route.name === 'Profile') iconName = 'person';
-          else if (route.name === 'Categories') iconName = 'grid';
-          else if (route.name === 'Home') {
-            iconName = 'home';
+          if (route.name === 'Profile') {
+            iconName = 'person-circle-outline'; // 👤 Profile icon
+          } else if (route.name === 'Categories') {
+            iconName = 'apps-outline'; // 🔲 Categories icon
+          } else if (route.name === 'Home') {
+            iconName = 'home-outline'; // 🏠 Home icon
             iconSize = size + 6; // Make Home bigger
           }
 
@@ -28,32 +31,20 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: 'gray',
-        tabBarStyle: { height: 65, paddingBottom: 8, paddingTop: 5 }
+        tabBarStyle: { height: 65, paddingBottom: 8, paddingTop: 5 },
+        tabBarLabelStyle: { fontSize: 12 }
       })}
     >
-      {/* Left tab */}
-      <Tab.Screen
-        name="Profile"
-        component={BMIPage}
-        options={{ headerShown: false }}
-      />
-
-      {/* Middle main tab */}
+      {/* All tabs point to BMIPage */}
+      <Tab.Screen name="Profile" component={BMIPage} />
       <Tab.Screen
         name="Home"
         component={BMIPage}
         options={{
-          headerShown: false,
           tabBarLabelStyle: { fontSize: 14, fontWeight: 'bold' }
         }}
       />
-
-      {/* Right tab */}
-      <Tab.Screen
-        name="Categories"
-        component={BMIPage}
-        options={{ headerShown: false }}
-      />
+      <Tab.Screen name="Categories" component={BMIPage} />
     </Tab.Navigator>
   );
 }

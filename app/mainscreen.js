@@ -1,18 +1,148 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import BottomNavBar from './BottomNavBar';
 
 export default function MainScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Welcome to HealthSync Dashboard!</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.greetingText}>Welcome to HealthSync 👋</Text>
+          <Text style={styles.subText}>
+            Track your fitness, nutrition, and wellness all in one place
+          </Text>
+        </View>
+
+        {/* Health Overview Cards*/}
+        <Text style={styles.sectionTitle}>Your Health Overview</Text>
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: '#e6d5f7' }]}>
+            <Ionicons name="body-outline" size={34} color="#6c3bb0" />
+            <Text style={styles.statLabel}>BMI</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: '#d5e8f7' }]}>
+            <MaterialCommunityIcons name="food-apple-outline" size={34} color="#0c65a7" />
+            <Text style={styles.statLabel}>Calories</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: '#f7d5d5' }]}>
+            <FontAwesome5 name="candy-cane" size={30} color="#d43f3f" />
+            <Text style={styles.statLabel}>Sugar</Text>
+          </View>
+        </View>
+
+        {/* Macronutrient Cards (no values) */}
+        <Text style={styles.sectionTitle}>Macronutrients</Text>
+        <View style={styles.macrosRow}>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Protein</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Carbs</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Fat</Text>
+          </View>
+        </View>
+
+        {/* Motivational Card */}
+        <View style={styles.motivationCard}>
+          <Text style={styles.motivationText}>
+            🌟 Start by exploring your health metrics to see your progress!
+          </Text>
+        </View>
+      </ScrollView>
       <BottomNavBar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, justifyContent:'center', alignItems:'center', paddingBottom: 60 },
-  text: { fontSize: 20, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: '#f8f9fc' },
+  headerContainer: {
+    padding: 25,
+    alignItems: 'center',
+    backgroundColor: '#c187e5',
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    marginBottom: 20,
+    shadowColor: '#6c3bb0',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  greetingText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-DemiBold' : 'sans-serif-medium',
+  },
+  subText: {
+    fontSize: 16,
+    color: '#f1f2f6',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  sectionTitle: {
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginTop: 25,
+    marginBottom: 10,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+  },
+  statCard: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderRadius: 18,
+    paddingVertical: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#aaa',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  statLabel: { color: '#2d3436', fontWeight: '600', marginTop: 8 },
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginHorizontal: 10,
+  },
+  macroCard: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+    elevation: 3,
+  },
+  macroLabel: { fontSize: 15, color: '#636e72', fontWeight: '600' },
+  motivationCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    margin: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#ccc',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  motivationText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#2c3e50',
+  },
 });
-
-

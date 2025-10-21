@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
+import { auth, db } from '../firebase/firebase';
 import BottomNavBar from './BottomNavBar';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function MainScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
+  // Macros state
+  const [macros, setMacros] = useState({ protein: 0, carbs: 0, fat: 0 });
+
+  // Auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -23,6 +28,34 @@ export default function MainScreen() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Fetch latest macros from Firestore
+  useEffect(() => {
+    if (!user) return;
+
+    const macrosRef = collection(db, 'macros');
+    const q = query(macrosRef, where('userId', '==', user.uid));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setMacros({ protein: 0, carbs: 0, fat: 0 });
+        return;
+      }
+
+      // Get latest entry
+      const latest = snapshot.docs
+        .map(doc => doc.data())
+        .sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate())[0];
+
+      setMacros({
+        protein: latest.protein || 0,
+        carbs: latest.carbs || 0,
+        fat: latest.fat || 0,
+      });
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   if (loading) {
     return (
@@ -67,9 +100,18 @@ export default function MainScreen() {
         {/* Macronutrient Cards */}
         <Text style={styles.sectionTitle}>Macronutrients</Text>
         <View style={styles.macrosRow}>
-          <View style={styles.macroCard}><Text style={styles.macroLabel}>Protein</Text></View>
-          <View style={styles.macroCard}><Text style={styles.macroLabel}>Carbs</Text></View>
-          <View style={styles.macroCard}><Text style={styles.macroLabel}>Fat</Text></View>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Protein</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2196F3' }}>{macros.protein}g</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Carbs</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#c187e5' }}>{macros.carbs}g</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <Text style={styles.macroLabel}>Fat</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#D4A017' }}>{macros.fat}g</Text>
+          </View>
         </View>
 
         {/* Motivational Card */}

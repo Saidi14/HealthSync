@@ -1,26 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert, Dimensions } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase/firebase';
 import BottomNavBar from './BottomNavBar';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
+import { LineChart } from 'react-native-chart-kit';
 
 export default function MainScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  // Macros state
+  // --- States ---
   const [macros, setMacros] = useState({ protein: 0, carbs: 0, fat: 0 });
+  const [calories, setCalories] = useState({ consumed: 0, goal: 2200 });
+  const [sugar, setSugar] = useState({ natural: 0, added: 0 });
+  const [totalSugar, setTotalSugar] = useState(0);
+  const [bmi, setBmi] = useState(0);
+  const [bmiCategory, setBmiCategory] = useState('Unknown');
+  const [bmiHistory, setBmiHistory] = useState([]);
 
-  // Auth state
+  // --- Auth ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
+      if (currentUser) setUser(currentUser);
+      else {
         Alert.alert('Not logged in', 'Please sign in first!');
         router.replace('/login');
       }
@@ -29,32 +35,103 @@ export default function MainScreen() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch latest macros from Firestore
+  // --- Fetch Today’s Data ---
   useEffect(() => {
     if (!user) return;
 
-    const macrosRef = collection(db, 'macros');
-    const q = query(macrosRef, where('userId', '==', user.uid));
+    const today = new Date();
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        setMacros({ protein: 0, carbs: 0, fat: 0 });
-        return;
-      }
-
-      // Get latest entry
-      const latest = snapshot.docs
-        .map(doc => doc.data())
-        .sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate())[0];
-
-      setMacros({
-        protein: latest.protein || 0,
-        carbs: latest.carbs || 0,
-        fat: latest.fat || 0,
-      });
+    // --- Meals / Calories ---
+    const mealsRef = collection(db, 'meals');
+    const unsubscribeMeals = onSnapshot(mealsRef, (snapshot) => {
+      const totalCalories = snapshot.docs.reduce((sum, doc) => {
+        const data = doc.data();
+        const ts = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+        if (
+          ts.getDate() === today.getDate() &&
+          ts.getMonth() === today.getMonth() &&
+          ts.getFullYear() === today.getFullYear()
+        ) {
+          return sum + (Number(data.calories) || 0);
+        }
+        return sum;
+      }, 0);
+      setCalories({ consumed: totalCalories, goal: 2200 });
     });
 
-    return () => unsubscribe();
+    // --- Macros ---
+    const macrosRef = collection(db, 'macros');
+    const unsubscribeMacros = onSnapshot(macrosRef, (snapshot) => {
+      const totals = snapshot.docs.reduce(
+        (sum, doc) => {
+          const data = doc.data();
+          const ts = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+          if (
+            ts.getDate() === today.getDate() &&
+            ts.getMonth() === today.getMonth() &&
+            ts.getFullYear() === today.getFullYear()
+          ) {
+            sum.protein += Number(data.protein) || 0;
+            sum.carbs += Number(data.carbs) || 0;
+            sum.fat += Number(data.fat) || 0;
+          }
+          return sum;
+        },
+        { protein: 0, carbs: 0, fat: 0 }
+      );
+      setMacros(totals);
+    });
+
+    // --- Sugar ---
+    const sugarRef = collection(db, 'sugar');
+    const unsubscribeSugar = onSnapshot(sugarRef, (snapshot) => {
+      const totals = snapshot.docs.reduce(
+        (sum, doc) => {
+          const data = doc.data();
+          const ts = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+          if (
+            ts.getDate() === today.getDate() &&
+            ts.getMonth() === today.getMonth() &&
+            ts.getFullYear() === today.getFullYear()
+          ) {
+            if (data.type === 'natural') sum.natural += Number(data.sugar) || 0;
+            if (data.type === 'added') sum.added += Number(data.sugar) || 0;
+          }
+          return sum;
+        },
+        { natural: 0, added: 0 }
+      );
+      setSugar(totals);
+      setTotalSugar(totals.natural + totals.added);
+    });
+
+    // --- Latest BMI ---
+    const bmiRef = collection(db, 'bmi');
+    const unsubscribeBmi = onSnapshot(
+      query(bmiRef, where('userId', '==', user.uid), orderBy('timestamp', 'desc')),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const latest = snapshot.docs[0].data();
+          setBmi(latest.bmi);
+          setBmiCategory(latest.category);
+
+          // Keep last 7 BMI entries for chart
+          const history = snapshot.docs.slice(0, 7).reverse().map(doc => {
+            const data = doc.data();
+            const date = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+            return { bmi: data.bmi, date: `${date.getDate()}/${date.getMonth() + 1}` };
+          });
+          setBmiHistory(history);
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeMeals();
+      unsubscribeMacros();
+      unsubscribeSugar();
+      unsubscribeBmi();
+    };
   }, [user]);
 
   if (loading) {
@@ -72,9 +149,9 @@ export default function MainScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Header */}
         <View style={styles.headerContainer}>
-          <Text style={styles.greetingText}>Welcome, {user.email} 👋</Text>
+          <Text style={styles.greetingText}>Welcome👋</Text>
           <Text style={styles.subText}>
-            Track your fitness, nutrition, and wellness all in one place
+            Track your daily nutrition and wellness all in one place
           </Text>
         </View>
 
@@ -84,18 +161,54 @@ export default function MainScreen() {
           <View style={[styles.statCard, { backgroundColor: '#e6d5f7' }]}>
             <Ionicons name="body-outline" size={34} color="#6c3bb0" />
             <Text style={styles.statLabel}>BMI</Text>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 5 }}>
+              {bmi} ({bmiCategory})
+            </Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: '#d5e8f7' }]}>
             <MaterialCommunityIcons name="food-apple-outline" size={34} color="#0c65a7" />
             <Text style={styles.statLabel}>Calories</Text>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 5 }}>
+              {calories.consumed} / {calories.goal} kcal
+            </Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: '#f7d5d5' }]}>
             <FontAwesome5 name="candy-cane" size={30} color="#d43f3f" />
             <Text style={styles.statLabel}>Sugar</Text>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 5 }}>
+              {totalSugar} g
+            </Text>
           </View>
         </View>
+
+        {/* BMI History Chart */}
+        {bmiHistory.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>BMI History</Text>
+            <LineChart
+              data={{
+                labels: bmiHistory.map(item => item.date),
+                datasets: [{ data: bmiHistory.map(item => item.bmi) }]
+              }}
+              width={Dimensions.get('window').width - 40}
+              height={220}
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: "#c187e5",
+                backgroundGradientFrom: "#f3e6ff",
+                backgroundGradientTo: "#e6d5f7",
+                decimalPlaces: 1,
+                color: (opacity = 1) => `rgba(108, 59, 176, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
+                style: { borderRadius: 16 },
+                propsForDots: { r: "6", strokeWidth: "2", stroke: "#6c3bb0" },
+              }}
+              style={{ marginVertical: 10, borderRadius: 16, alignSelf: 'center' }}
+            />
+          </>
+        )}
 
         {/* Macronutrient Cards */}
         <Text style={styles.sectionTitle}>Macronutrients</Text>
@@ -117,7 +230,7 @@ export default function MainScreen() {
         {/* Motivational Card */}
         <View style={styles.motivationCard}>
           <Text style={styles.motivationText}>
-            🌟 Start by exploring your health metrics to see your progress!
+            🌟 Keep adding your meals and macros to see your progress in real time!
           </Text>
         </View>
       </ScrollView>

@@ -21,7 +21,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login' || segments[0] === 'signup';
+    const inAuthGroup = segments[0] === 'LoginScreen' || segments[0] === 'SignUpScreen';
 
     if (user && inAuthGroup) {
       router.replace('/mainscreen'); // logged in → redirect away from auth

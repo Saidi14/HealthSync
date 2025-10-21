@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 import BottomNavBar from '../app/BottomNavBar';
-import { auth, db } from '../firebase/firebase'; // make sure db = Firestore instance
+import { auth, db } from '../firebase/firebase'; 
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 export default function Calories() {
@@ -54,7 +54,7 @@ export default function Calories() {
       return;
     }
 
-    const caloriesPerServing = 100; // Example: each serving = 100 kcal, you can adjust or fetch real data
+    const caloriesPerServing = 100; 
     const totalCalories = parseFloat(servings) * caloriesPerServing;
 
     const newMeal = {
@@ -177,7 +177,6 @@ export default function Calories() {
         </View>
       </Modal>
 
-      {/* Bottom Navigation */}
       <BottomNavBar />
     </View>
   );

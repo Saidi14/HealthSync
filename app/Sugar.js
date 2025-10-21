@@ -10,7 +10,7 @@ export default function Sugar({ navigation }) {
   const [addedSugars, setAddedSugars] = useState(16);
   const [modalVisible, setModalVisible] = useState(false);
   const [sugarAmount, setSugarAmount] = useState('');
-  const [sugarType, setSugarType] = useState(''); // "natural" or "added"
+  const [sugarType, setSugarType] = useState(''); 
   const [userId, setUserId] = useState(null);
 
   const totalSugar = naturalSugars + addedSugars;
@@ -58,7 +58,7 @@ export default function Sugar({ navigation }) {
       setSugarType('');
       setModalVisible(false);
     } catch (error) {
-      console.log('❌ Error saving sugar:', error);
+      console.log(' Error saving sugar:', error);
       Alert.alert('Error', 'Failed to save sugar. Try again.');
     }
   };

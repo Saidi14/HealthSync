@@ -8,8 +8,8 @@ export const saveUserData = async (uid, name, email) => {
       email,
       createdAt: new Date(),
     });
-    console.log("✅ User data saved to Firestore");
+    console.log("User data saved to Firestore");
   } catch (error) {
-    console.error("❌ Error saving user data:", error);
+    console.error("Error saving user data:", error);
   }
 };

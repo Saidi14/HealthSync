@@ -30,7 +30,6 @@ export default function HealthCategories() {
         </TouchableOpacity>
       </View>
 
-      {/* iOS style bottom nav bar */}
       <BottomNavBar />
     </View>
   );

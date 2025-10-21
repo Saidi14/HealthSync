@@ -1,12 +1,12 @@
+// screens/MainScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase/firebase';
 import BottomNavBar from './BottomNavBar';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
-import { LineChart } from 'react-native-chart-kit';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -18,9 +18,7 @@ export default function MainScreen() {
   const [calories, setCalories] = useState({ consumed: 0, goal: 2200 });
   const [sugar, setSugar] = useState({ natural: 0, added: 0 });
   const [totalSugar, setTotalSugar] = useState(0);
-  const [bmi, setBmi] = useState(0);
-  const [bmiCategory, setBmiCategory] = useState('Unknown');
-  const [bmiHistory, setBmiHistory] = useState([]);
+  const [bmi, setBmi] = useState(null);
 
   // --- Auth ---
   useEffect(() => {
@@ -38,7 +36,6 @@ export default function MainScreen() {
   // --- Fetch Today’s Data ---
   useEffect(() => {
     if (!user) return;
-
     const today = new Date();
 
     // --- Meals / Calories ---
@@ -50,7 +47,8 @@ export default function MainScreen() {
         if (
           ts.getDate() === today.getDate() &&
           ts.getMonth() === today.getMonth() &&
-          ts.getFullYear() === today.getFullYear()
+          ts.getFullYear() === today.getFullYear() &&
+          data.userId === user.uid
         ) {
           return sum + (Number(data.calories) || 0);
         }
@@ -69,7 +67,8 @@ export default function MainScreen() {
           if (
             ts.getDate() === today.getDate() &&
             ts.getMonth() === today.getMonth() &&
-            ts.getFullYear() === today.getFullYear()
+            ts.getFullYear() === today.getFullYear() &&
+            data.userId === user.uid
           ) {
             sum.protein += Number(data.protein) || 0;
             sum.carbs += Number(data.carbs) || 0;
@@ -92,7 +91,8 @@ export default function MainScreen() {
           if (
             ts.getDate() === today.getDate() &&
             ts.getMonth() === today.getMonth() &&
-            ts.getFullYear() === today.getFullYear()
+            ts.getFullYear() === today.getFullYear() &&
+            data.userId === user.uid
           ) {
             if (data.type === 'natural') sum.natural += Number(data.sugar) || 0;
             if (data.type === 'added') sum.added += Number(data.sugar) || 0;
@@ -105,32 +105,26 @@ export default function MainScreen() {
       setTotalSugar(totals.natural + totals.added);
     });
 
-    // --- Latest BMI ---
+    // --- BMI ---
     const bmiRef = collection(db, 'bmi');
-    const unsubscribeBmi = onSnapshot(
-      query(bmiRef, where('userId', '==', user.uid), orderBy('timestamp', 'desc')),
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const latest = snapshot.docs[0].data();
-          setBmi(latest.bmi);
-          setBmiCategory(latest.category);
-
-          // Keep last 7 BMI entries for chart
-          const history = snapshot.docs.slice(0, 7).reverse().map(doc => {
-            const data = doc.data();
-            const date = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
-            return { bmi: data.bmi, date: `${date.getDate()}/${date.getMonth() + 1}` };
-          });
-          setBmiHistory(history);
-        }
+    const q = query(bmiRef, where('userId', '==', user.uid));
+    const unsubscribeBMI = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        // get the latest BMI entry
+        const latest = snapshot.docs.reduce((a, b) => {
+          return a.data().timestamp.toDate() > b.data().timestamp.toDate() ? a : b;
+        });
+        setBmi(latest.data().bmi);
+      } else {
+        setBmi(null);
       }
-    );
+    });
 
     return () => {
       unsubscribeMeals();
       unsubscribeMacros();
       unsubscribeSugar();
-      unsubscribeBmi();
+      unsubscribeBMI();
     };
   }, [user]);
 
@@ -143,6 +137,9 @@ export default function MainScreen() {
   }
 
   if (!user) return null;
+
+  const remainingCalories = calories.goal - calories.consumed;
+  const caloriesProgress = calories.consumed / calories.goal;
 
   return (
     <View style={styles.container}>
@@ -162,7 +159,7 @@ export default function MainScreen() {
             <Ionicons name="body-outline" size={34} color="#6c3bb0" />
             <Text style={styles.statLabel}>BMI</Text>
             <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 5 }}>
-              {bmi} ({bmiCategory})
+              {bmi ? bmi : '--'}
             </Text>
           </View>
 
@@ -182,33 +179,6 @@ export default function MainScreen() {
             </Text>
           </View>
         </View>
-
-        {/* BMI History Chart */}
-        {bmiHistory.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>BMI History</Text>
-            <LineChart
-              data={{
-                labels: bmiHistory.map(item => item.date),
-                datasets: [{ data: bmiHistory.map(item => item.bmi) }]
-              }}
-              width={Dimensions.get('window').width - 40}
-              height={220}
-              yAxisSuffix=""
-              chartConfig={{
-                backgroundColor: "#c187e5",
-                backgroundGradientFrom: "#f3e6ff",
-                backgroundGradientTo: "#e6d5f7",
-                decimalPlaces: 1,
-                color: (opacity = 1) => `rgba(108, 59, 176, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity})`,
-                style: { borderRadius: 16 },
-                propsForDots: { r: "6", strokeWidth: "2", stroke: "#6c3bb0" },
-              }}
-              style={{ marginVertical: 10, borderRadius: 16, alignSelf: 'center' }}
-            />
-          </>
-        )}
 
         {/* Macronutrient Cards */}
         <Text style={styles.sectionTitle}>Macronutrients</Text>
@@ -230,7 +200,7 @@ export default function MainScreen() {
         {/* Motivational Card */}
         <View style={styles.motivationCard}>
           <Text style={styles.motivationText}>
-            🌟 Keep adding your meals and macros to see your progress in real time!
+            🌟 Keep adding your meals, macros, and BMI to see your progress in real time!
           </Text>
         </View>
       </ScrollView>

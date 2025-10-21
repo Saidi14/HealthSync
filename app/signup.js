@@ -1,110 +1,78 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase/firebase';
+import { saveUserData } from '../firebase/saveUserData';
+import { useRouter } from 'expo-router';
 
 export default function SignUpScreen() {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignUp = async () => {
+    if (!name || !email || !password) {
+      Alert.alert("Error", "Please fill all fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await saveUserData(user.uid, name, email);
+
+      Alert.alert("Success", "Account created!");
+      router.replace('/login'); // redirect to login after signup
+    } catch (error) {
+      console.error("❌ SignUp error:", error.code, error.message);
+      Alert.alert("Error", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign up</Text>
-      <Text style={styles.subtitle}>Create Account</Text>
-      
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#999"
-          autoCapitalize="words"
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          placeholderTextColor="#999"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          secureTextEntry={true}
-        />
-        
-        <TouchableOpacity 
-          style={styles.signUpButton}
-          onPress={() => router.push('/mainscreen')}
-        >
-        <Text style={styles.signUpButtonText}>Create Account</Text>
-        </TouchableOpacity>
+      <Text style={styles.title}>Sign Up</Text>
 
+      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
 
-        <TouchableOpacity 
-          style={styles.loginLink}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.loginLinkText}>
-            Already have an account? <Text style={styles.loginLinkBold}>Log in</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+        <Text style={styles.buttonText}>Create Account</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.replace('/login')}>
+        <Text style={styles.loginText}>Already have an account? Log in</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginBottom: 40,
-    color: '#333',
-  },
-  formContainer: {
-    paddingHorizontal: 20,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  signUpButton: {
-    backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  signUpButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  loginLink: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  loginLinkText: {
-    color: '#666',
-    fontSize: 16,
-  },
-  loginLinkBold: {
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
+  container: { flex:1, padding:20, justifyContent:'center', backgroundColor:'#fff' },
+  title: { fontSize:24, fontWeight:'bold', marginBottom:20, textAlign:'center' },
+  input: { borderWidth:1, borderColor:'#ccc', borderRadius:8, padding:12, marginBottom:15 },
+  button: { backgroundColor:'#007AFF', padding:15, borderRadius:8, alignItems:'center', marginBottom:15 },
+  buttonText: { color:'#fff', fontWeight:'bold', fontSize:16 },
+  loginText: { textAlign:'center', color:'#007AFF', fontSize:14 }
 });

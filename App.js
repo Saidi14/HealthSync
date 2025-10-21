@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginPage from './app/LoginScreen';
-import MainScreen from './app/MainScreen';
+import MainScreen from './app/mainscreen';
 import HealthCategories from './app/HealthCategories';
 import Profile from './app/Profile';
 import Settings from './app/Settings';

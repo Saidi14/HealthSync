@@ -1,179 +1,95 @@
- import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase/firebase';
+import { useRouter } from 'expo-router';
 
-const LoginPage = () => {
-  const navigation = useNavigation();
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    navigation.navigate('mainscreen');
+  const handleLogin = async () => {
+    // ✅ Check if email & password are filled
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('Attempting login with:', email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      console.log('✅ User logged in:', user.uid);
+      Alert.alert('Success', 'Logged in successfully!');
+      router.push('/mainscreen');
+
+    } catch (error) {
+      console.log('❌ Login error:', error.code, error.message);
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          Alert.alert('Error', 'No account found with this email. Please register first.');
+          break;
+        case 'auth/wrong-password':
+          Alert.alert('Error', 'Incorrect password. Try again.');
+          break;
+        case 'auth/invalid-email':
+          Alert.alert('Error', 'Invalid email format.');
+          break;
+        default:
+          Alert.alert('Error', error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  
-  
-  
+
   return (
     <View style={styles.container}>
-      <Text style={styles.time}>14:55</Text>
-      
-      <Text style={styles.welcome}>Welcome</Text>
-      <Text style={styles.title}>HealthSync</Text>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#999"
-        />
-      </View>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your password"
-          placeholderTextColor="#999"
-          secureTextEntry={true}
-        />
-      </View>
-      
-      <View style={styles.rememberContainer}>
-        <TouchableOpacity style={styles.checkbox}>
-          {/* You would add a checkbox component here */}
-        </TouchableOpacity>
-        <Text style={styles.rememberText}>Remember me</Text>
-        <TouchableOpacity>
-          <Text style={styles.forgotPassword}>Forgot password?</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <TouchableOpacity style={styles.signInButton}>
-        <Text style={styles.signInText}>Sign in</Text>
+      <Text style={styles.title}>HealthSync Login</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TouchableOpacity style={styles.signInButton} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.signInText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
       </TouchableOpacity>
-      
+
       <Text style={styles.signUpText}>
-        Don't have an account? <Text style={styles.signUpLink}>Sign Up</Text>
+        Don't have an account?{' '}
+        <Text style={styles.signUpLink} onPress={() => router.push('/signup')}>
+          Sign Up
+        </Text>
       </Text>
-      
-      <Text style={styles.orText}>Or With</Text>
-      
-      <View style={styles.socialContainer}>
-        <TouchableOpacity style={styles.socialButton}>
-          {/* Add Google icon here */}
-          <Text style={styles.socialText}>Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}>
-          {/* Add Apple icon here */}
-          <Text style={styles.socialText}>Apple</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  time: {
-    textAlign: 'right',
-    fontSize: 16,
-    color: '#000',
-    marginBottom: 30,
-  },
-  welcome: {
-    fontSize: 24,
-    color: '#000',
-    marginBottom: 5,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 40,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  rememberContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginRight: 8,
-  },
-  rememberText: {
-    fontSize: 14,
-    color: '#000',
-    marginRight: 'auto',
-  },
-  forgotPassword: {
-    fontSize: 14,
-    color: '#007AFF', // iOS blue color
-  },
-  signInButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  signInText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signUpText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 30,
-  },
-  signUpLink: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  orText: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 20,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  socialButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  socialText: {
-    marginLeft: 8,
-  },
+  container: { flex:1, justifyContent:'center', padding:20, backgroundColor:'#fff' },
+  title: { fontSize:28, fontWeight:'bold', textAlign:'center', marginBottom:30 },
+  input: { borderWidth:1, borderColor:'#ccc', borderRadius:8, padding:12, fontSize:16, marginBottom:20 },
+  signInButton: { backgroundColor:'#007AFF', borderRadius:8, padding:15, alignItems:'center', marginBottom:20 },
+  signInText: { color:'#fff', fontSize:16, fontWeight:'bold' },
+  signUpText: { textAlign:'center', color:'#666', fontSize:14 },
+  signUpLink: { color:'#007AFF', fontWeight:'bold' },
 });
-
-export default LoginPage;

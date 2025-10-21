@@ -12,14 +12,14 @@ export default function MainScreen() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  // --- States ---
+  // States 
   const [macros, setMacros] = useState({ protein: 0, carbs: 0, fat: 0 });
   const [calories, setCalories] = useState({ consumed: 0, goal: 2200 });
   const [sugar, setSugar] = useState({ natural: 0, added: 0 });
   const [totalSugar, setTotalSugar] = useState(0);
   const [bmiData, setBmiData] = useState({ bmi: 0, category: 'Unknown' });
 
-  // --- Auth ---
+  //Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) setUser(currentUser);
@@ -32,12 +32,12 @@ export default function MainScreen() {
     return () => unsubscribe();
   }, []);
 
-  // --- Fetch Today’s Data ---
+ 
   useEffect(() => {
     if (!user) return;
     const today = new Date();
 
-    // --- Meals / Calories ---
+    // Meals / Calories 
     const mealsRef = collection(db, 'meals');
     const unsubscribeMeals = onSnapshot(mealsRef, (snapshot) => {
       const totalCalories = snapshot.docs.reduce((sum, doc) => {
@@ -55,7 +55,7 @@ export default function MainScreen() {
       setCalories({ consumed: totalCalories, goal: 2200 });
     });
 
-    // --- Macros ---
+    //  Macros 
     const macrosRef = collection(db, 'macros');
     const unsubscribeMacros = onSnapshot(macrosRef, (snapshot) => {
       const totals = snapshot.docs.reduce(
@@ -78,7 +78,7 @@ export default function MainScreen() {
       setMacros(totals);
     });
 
-    // --- Sugar ---
+    // Sugar 
     const sugarRef = collection(db, 'sugar');
     const unsubscribeSugar = onSnapshot(sugarRef, (snapshot) => {
       const totals = snapshot.docs.reduce(
@@ -101,7 +101,7 @@ export default function MainScreen() {
       setTotalSugar(totals.natural + totals.added);
     });
 
-    // --- BMI (latest entry) ---
+    // BMI latest entry 
     const bmiRef = collection(db, 'bmi');
     const bmiQuery = query(
       bmiRef,

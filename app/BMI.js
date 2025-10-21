@@ -1,4 +1,3 @@
-// screens/BMI.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert } from 'react-native';
 import BottomNavBar from './BottomNavBar';
@@ -10,7 +9,7 @@ export default function BMI({ navigation }) {
   const [height, setHeight] = useState(165);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [currentField, setCurrentField] = useState(null); // 'weight' or 'height'
+  const [currentField, setCurrentField] = useState(null); 
   const [inputValue, setInputValue] = useState('');
   const [userId, setUserId] = useState(null);
 
@@ -85,7 +84,7 @@ export default function BMI({ navigation }) {
 
         Alert.alert('Success', 'BMI data saved!');
       } catch (error) {
-        console.log('❌ Error saving BMI:', error);
+        console.log('Error saving BMI:', error);
         Alert.alert('Error', 'Failed to save BMI. Try again.');
       }
     }

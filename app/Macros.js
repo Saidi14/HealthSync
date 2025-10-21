@@ -19,7 +19,7 @@ export default function Macros({ navigation }) {
     return unsubscribe;
   }, []);
 
-  // AnimatedBar component
+  // progress bar
   const AnimatedBar = ({ percentage, color }) => {
     const widthAnim = new Animated.Value(0);
     useEffect(() => {
@@ -59,7 +59,7 @@ export default function Macros({ navigation }) {
         timestamp: new Date(),
       });
 
-      // Create a new entry for the list
+      // Create new entry for list
       const newEntry = {
         id: docRef.id,
         protein: Number(protein),

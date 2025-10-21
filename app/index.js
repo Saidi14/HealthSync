@@ -2,10 +2,6 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import { router } from 'expo-router';
 import { Image } from 'react-native';
 
-
-
-
-
 export default function HomeScreen() {
   return (
     <View style={styles.container}>

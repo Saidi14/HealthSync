@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    // ✅ Check if email & password are filled
+    // Checks if email & password are filled
     if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please enter both email and password.');
       return;
@@ -24,12 +24,12 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      console.log('✅ User logged in:', user.uid);
+      console.log('User logged in:', user.uid);
       Alert.alert('Success', 'Logged in successfully!');
       router.push('/mainscreen');
 
     } catch (error) {
-      console.log('❌ Login error:', error.code, error.message);
+      console.log('Login error:', error.code, error.message);
 
       switch (error.code) {
         case 'auth/user-not-found':

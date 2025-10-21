@@ -23,7 +23,7 @@ export default function SignUpScreen() {
     }
 
     try {
-      // Create the user in Firebase Auth
+      // Create  user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -35,7 +35,7 @@ export default function SignUpScreen() {
       // Redirect to MainScreen after successful signup
       router.replace('/mainscreen');
     } catch (error) {
-      console.error("❌ SignUp error:", error.code, error.message);
+      console.error(" SignUp error:", error.code, error.message);
       Alert.alert("Error", error.message);
     }
   };

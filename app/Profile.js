@@ -74,7 +74,7 @@ export default function Profile() {
           >
             <Ionicons name="settings-outline" size={28} color="#c187e5" />
           </TouchableOpacity>
-          <Text style={styles.name}>Naqeebah Khan</Text>
+          <Text style={styles.name}>Naqeebah </Text>
 
           <View style={styles.stats}>
             <View style={styles.statItem}>

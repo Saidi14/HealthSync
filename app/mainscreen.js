@@ -1,4 +1,3 @@
-// screens/MainScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -6,7 +5,7 @@ import { auth, db } from '../firebase/firebase';
 import BottomNavBar from './BottomNavBar';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -18,7 +17,7 @@ export default function MainScreen() {
   const [calories, setCalories] = useState({ consumed: 0, goal: 2200 });
   const [sugar, setSugar] = useState({ natural: 0, added: 0 });
   const [totalSugar, setTotalSugar] = useState(0);
-  const [bmi, setBmi] = useState(null);
+  const [bmiData, setBmiData] = useState({ bmi: 0, category: 'Unknown' });
 
   // --- Auth ---
   useEffect(() => {
@@ -47,8 +46,7 @@ export default function MainScreen() {
         if (
           ts.getDate() === today.getDate() &&
           ts.getMonth() === today.getMonth() &&
-          ts.getFullYear() === today.getFullYear() &&
-          data.userId === user.uid
+          ts.getFullYear() === today.getFullYear()
         ) {
           return sum + (Number(data.calories) || 0);
         }
@@ -67,8 +65,7 @@ export default function MainScreen() {
           if (
             ts.getDate() === today.getDate() &&
             ts.getMonth() === today.getMonth() &&
-            ts.getFullYear() === today.getFullYear() &&
-            data.userId === user.uid
+            ts.getFullYear() === today.getFullYear()
           ) {
             sum.protein += Number(data.protein) || 0;
             sum.carbs += Number(data.carbs) || 0;
@@ -91,8 +88,7 @@ export default function MainScreen() {
           if (
             ts.getDate() === today.getDate() &&
             ts.getMonth() === today.getMonth() &&
-            ts.getFullYear() === today.getFullYear() &&
-            data.userId === user.uid
+            ts.getFullYear() === today.getFullYear()
           ) {
             if (data.type === 'natural') sum.natural += Number(data.sugar) || 0;
             if (data.type === 'added') sum.added += Number(data.sugar) || 0;
@@ -105,18 +101,18 @@ export default function MainScreen() {
       setTotalSugar(totals.natural + totals.added);
     });
 
-    // --- BMI ---
+    // --- BMI (latest entry) ---
     const bmiRef = collection(db, 'bmi');
-    const q = query(bmiRef, where('userId', '==', user.uid));
-    const unsubscribeBMI = onSnapshot(q, (snapshot) => {
+    const bmiQuery = query(
+      bmiRef,
+      where('userId', '==', user.uid),
+      orderBy('timestamp', 'desc'),
+      limit(1)
+    );
+    const unsubscribeBMI = onSnapshot(bmiQuery, (snapshot) => {
       if (!snapshot.empty) {
-        // get the latest BMI entry
-        const latest = snapshot.docs.reduce((a, b) => {
-          return a.data().timestamp.toDate() > b.data().timestamp.toDate() ? a : b;
-        });
-        setBmi(latest.data().bmi);
-      } else {
-        setBmi(null);
+        const data = snapshot.docs[0].data();
+        setBmiData({ bmi: data.bmi, category: data.category });
       }
     });
 
@@ -159,7 +155,7 @@ export default function MainScreen() {
             <Ionicons name="body-outline" size={34} color="#6c3bb0" />
             <Text style={styles.statLabel}>BMI</Text>
             <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 5 }}>
-              {bmi ? bmi : '--'}
+              {bmiData.bmi} ({bmiData.category})
             </Text>
           </View>
 
@@ -200,7 +196,7 @@ export default function MainScreen() {
         {/* Motivational Card */}
         <View style={styles.motivationCard}>
           <Text style={styles.motivationText}>
-            🌟 Keep adding your meals, macros, and BMI to see your progress in real time!
+            🌟 Keep adding your meals and macros to see your progress in real time!
           </Text>
         </View>
       </ScrollView>

@@ -1,15 +1,67 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import BottomNavBar from './BottomNavBar';
+import { auth, db } from '../firebase/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function Sugar({ navigation }) {
   const [dailyLimit] = useState(36);
   const [naturalSugars, setNaturalSugars] = useState(12);
   const [addedSugars, setAddedSugars] = useState(16);
   const [modalVisible, setModalVisible] = useState(false);
+  const [sugarAmount, setSugarAmount] = useState('');
+  const [sugarType, setSugarType] = useState(''); // "natural" or "added"
+  const [userId, setUserId] = useState(null);
 
   const totalSugar = naturalSugars + addedSugars;
-  const percentage = Math.round((totalSugar / dailyLimit) * 100);
+  const percentage = Math.min(Math.round((totalSugar / dailyLimit) * 100), 100);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) setUserId(user.uid);
+      else setUserId(null);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleSaveSugar = async () => {
+    if (!sugarAmount || !sugarType) {
+      Alert.alert('Error', 'Please enter sugar amount and select type.');
+      return;
+    }
+
+    if (!userId) {
+      Alert.alert('Error', 'No user logged in.');
+      return;
+    }
+
+    const sugarValue = Number(sugarAmount);
+    if (isNaN(sugarValue) || sugarValue <= 0) {
+      Alert.alert('Error', 'Please enter a valid number for sugar.');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'sugar'), {
+        userId,
+        sugar: sugarValue,
+        type: sugarType,
+        timestamp: new Date(),
+      });
+
+      if (sugarType === 'natural') setNaturalSugars(prev => prev + sugarValue);
+      if (sugarType === 'added') setAddedSugars(prev => prev + sugarValue);
+
+      Alert.alert('Success', 'Sugar intake saved!');
+      setSugarAmount('');
+      setSugarType('');
+      setModalVisible(false);
+    } catch (error) {
+      console.log('❌ Error saving sugar:', error);
+      Alert.alert('Error', 'Failed to save sugar. Try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -52,17 +104,11 @@ export default function Sugar({ navigation }) {
               <Text style={styles.inputLabel}>Added Sugars</Text>
               <Text style={styles.inputSubLabel}>From processed foods</Text>
             </View>
-            <TextInput
-              style={styles.input}
-              value={addedSugars.toString()}
-              onChangeText={(text) => setAddedSugars(Number(text) || 0)}
-              keyboardType="numeric"
-            />
+            <Text style={styles.input}>{addedSugars}</Text>
           </View>
         </View>
       </View>
 
-      {/* Add Sugar Button */}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setModalVisible(true)}
@@ -70,48 +116,41 @@ export default function Sugar({ navigation }) {
         <Text style={styles.addButtonText}>Add sugar</Text>
       </TouchableOpacity>
 
-      {/* Popup Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="none"
-      >
+      {/* Modal */}
+      <Modal visible={modalVisible} transparent animationType="none">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalHeader}>Enter food / drink name</Text>
+            <Text style={styles.modalHeader}>Enter sugar</Text>
+
             <TextInput
               style={styles.foodInput}
-              placeholder="e.g. Macaroni and Cheese"
+              placeholder="Sugar in grams"
+              keyboardType="numeric"
+              value={sugarAmount}
+              onChangeText={setSugarAmount}
             />
 
-            <Text style={styles.sectionTitle}>Serving size</Text>
-            <View style={styles.servingRow}>
-              <TouchableOpacity style={styles.purpleButton}>
-                <Text style={styles.buttonText}>Small</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 }}>
+              <TouchableOpacity
+                style={[styles.typeButton, sugarType === 'natural' && styles.typeButtonSelected]}
+                onPress={() => setSugarType('natural')}
+              >
+                <Text style={styles.typeButtonText}>Natural</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.purpleButton}>
-                <Text style={styles.buttonText}>800G</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.purpleButton}>
-                <Text style={styles.buttonText}>Large</Text>
+
+              <TouchableOpacity
+                style={[styles.typeButton, sugarType === 'added' && styles.typeButtonSelected]}
+                onPress={() => setSugarType('added')}
+              >
+                <Text style={styles.typeButtonText}>Added</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.sectionTitle}>Number of servings</Text>
-            <View style={styles.servingDisplay}>
-              <Text style={styles.servingText}>2</Text>
-            </View>
-
-            <View style={styles.keypad}>
-              {[1,2,3,4,5,6,7,8,9,0].map((num) => (
-                <TouchableOpacity key={num} style={styles.key}>
-                  <Text style={styles.keyText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity style={styles.calculateButton}>
-              <Text style={styles.calculateButtonText}>Calculate sugar</Text>
+            <TouchableOpacity
+              style={styles.calculateButton}
+              onPress={handleSaveSugar}
+            >
+              <Text style={styles.calculateButtonText}>Save sugar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -128,6 +167,7 @@ export default function Sugar({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

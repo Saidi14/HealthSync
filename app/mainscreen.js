@@ -1,20 +1,51 @@
-import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase/firebase';
 import BottomNavBar from './BottomNavBar';
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export default function MainScreen() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        Alert.alert('Not logged in', 'Please sign in first!');
+        router.replace('/login');
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Header */}
         <View style={styles.headerContainer}>
-          <Text style={styles.greetingText}>Welcome to HealthSync 👋</Text>
+          <Text style={styles.greetingText}>Welcome, {user.email} 👋</Text>
           <Text style={styles.subText}>
             Track your fitness, nutrition, and wellness all in one place
           </Text>
         </View>
 
-        {/* Health Overview Cards*/}
+        {/* Health Overview Cards */}
         <Text style={styles.sectionTitle}>Your Health Overview</Text>
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: '#e6d5f7' }]}>
@@ -33,18 +64,12 @@ export default function MainScreen() {
           </View>
         </View>
 
-        {/* Macronutrient Cards (no values) */}
+        {/* Macronutrient Cards */}
         <Text style={styles.sectionTitle}>Macronutrients</Text>
         <View style={styles.macrosRow}>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroLabel}>Protein</Text>
-          </View>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroLabel}>Carbs</Text>
-          </View>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroLabel}>Fat</Text>
-          </View>
+          <View style={styles.macroCard}><Text style={styles.macroLabel}>Protein</Text></View>
+          <View style={styles.macroCard}><Text style={styles.macroLabel}>Carbs</Text></View>
+          <View style={styles.macroCard}><Text style={styles.macroLabel}>Fat</Text></View>
         </View>
 
         {/* Motivational Card */}
@@ -54,6 +79,7 @@ export default function MainScreen() {
           </Text>
         </View>
       </ScrollView>
+
       <BottomNavBar />
     </View>
   );
@@ -140,9 +166,5 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  motivationText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#2c3e50',
-  },
+  motivationText: { textAlign: 'center', fontSize: 16, color: '#2c3e50' },
 });
